@@ -1,6 +1,6 @@
 //
 //  Peer.swift
-//  PeerInvitationStateTests
+//  StateMachine
 //
 //  Created by Mathias Köhnke on 31/07/15.
 //  Copyright (c) 2015 Mathias Köhnke. All rights reserved.

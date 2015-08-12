@@ -1,6 +1,6 @@
 //
 //  AdvertiserStateMachine.swift
-//  PeerInvitationStateTests
+//  StateMachine
 //
 //  Created by Mathias Köhnke on 12/08/15.
 //  Copyright (c) 2015 Mathias Köhnke. All rights reserved.
