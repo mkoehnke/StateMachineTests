@@ -15,6 +15,8 @@ class Peer : NSObject {
         case Invited
         case Connected
         case Disconnected
+        case Selected
+        case Accepted
     }
     
     var name : String!

@@ -7,20 +7,68 @@
 //
 
 import Foundation
+import TransitionKit
 
 class AdvertiserStateMachine : StateMachine {
 
-    private let searchingStateName = "searchingState"
-    private let hasReceivedInvitationsStateName = "hasFoundPeersState"
-    private let hasStateName = "hasInvitedPeersState"
-    private let hasConnectedPeersStateName = "hasConnectedPeersSate"
-    private let sessionStartedStateName = "sessionStartedState"
+    let searchingStateName = "searchingState"
+    let hasReceivedInvitationsStateName = "hasReceivedInvitationsState"
+    let hasSelectedInvitationStateName = "hasSelectedInvitationState"
+    let hasAcceptedInvitationStateName = "hasAcceptedInvitationState"
+    let connectedStateName = "connectedState"
     
-    private let peerFoundEventName = "peerFoundEvent"
-    private let peerInvitedEventName = "peerInvitedEvent"
-    private let peerConnectedEventName = "peerConnectedEvent"
-    private let lastFoundPeerLostEventName = "lastFoundPeerLostEvent"
-    private let lastInvitedPeerLostEventName = "lastInvitedPeerLostEvent"
-    private let lastConnectedPeerLostEventName = "lastConnectedPeerLostEvent"
+    private let invitationFoundEventName = "invitationFoundEvent"
+    private let invitationSelectedEventName = "invitationSelectedEvent"
+    private let invitationAcceptedEventName = "invitationAcceptedEvent"
+    private let hasConnectedEventName = "hasConnectedEventName"
+    private let connectionLostEventName = "connectionLostEvent"
+ 
     
+    override init() {
+        super.init()
+        let searchingState = TKState(name: searchingStateName)
+        let hasReceivedInvitationsState = TKState(name: hasReceivedInvitationsStateName)
+        let hasSelectedInvitationState = TKState(name: hasSelectedInvitationStateName)
+        let hasAcceptedInvitationState = TKState(name: hasAcceptedInvitationStateName)
+        let connectedState = TKState(name: connectedStateName)
+        
+        let invitationFoundEvent = TKEvent(name: invitationFoundEventName, transitioningFromStates: [searchingState], toState: hasReceivedInvitationsState)
+        let invitationSelectedEvent = TKEvent(name: invitationSelectedEventName, transitioningFromStates: [hasReceivedInvitationsState], toState: hasSelectedInvitationState)
+        let invitationAcceptedEvent = TKEvent(name: invitationAcceptedEventName, transitioningFromStates: [hasSelectedInvitationState], toState: hasAcceptedInvitationState)
+        let hasConnectedEvent = TKEvent(name: hasConnectedEventName, transitioningFromStates: [hasAcceptedInvitationState], toState: connectedState)
+        let connectionLostEvent = TKEvent(name: connectionLostEventName, transitioningFromStates: [connectedState, hasAcceptedInvitationState, hasSelectedInvitationState, hasReceivedInvitationsState], toState: searchingState)
+        
+        stateMachine.addStates([searchingState, hasReceivedInvitationsState, hasSelectedInvitationState, hasAcceptedInvitationState, connectedState])
+        stateMachine.addEvents([invitationFoundEvent, invitationSelectedEvent, invitationAcceptedEvent, hasConnectedEvent, connectionLostEvent])
+        stateMachine.initialState = searchingState
+        stateMachine.activate()
+    }
+    
+    func invitationFound(peer: Peer) -> Bool {
+        peer.currentState = .Found
+        peers.addObject(peer)
+        return fireEvent(invitationFoundEventName)
+    }
+    
+    func invitationSelected(peer: Peer) -> Bool {
+        peer.currentState = .Selected
+        return fireEvent(invitationSelectedEventName)
+    }
+    
+    func invitationAccepted(peer: Peer) -> Bool {
+        peer.currentState = .Accepted
+        return fireEvent(invitationAcceptedEventName)
+    }
+    
+    func hasConnected(peer: Peer) -> Bool {
+        peer.currentState = .Connected
+        return fireEvent(hasConnectedEventName)
+    }
+    
+    func connectionLostEvent(peer: Peer) -> Bool {
+        peer.currentState = .Disconnected
+        peers.removeObject(peer)
+        return fireEvent(connectionLostEventName)
+    }
+
 }

@@ -67,6 +67,7 @@ class BrowserStateMachine : StateMachine {
     }
     
     func peerFound(peer: Peer) -> Bool {
+        peer.currentState = .Found
         peers.addObject(peer)
         return fireEvent(peerFoundEventName)
     }

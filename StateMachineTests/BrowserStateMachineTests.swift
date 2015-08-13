@@ -89,10 +89,4 @@ class StateMachineTests: XCTestCase {
             stateMachine.numberOfPeers(.Invited) == 0 &&
             stateMachine.numberOfPeers(.Connected) == 0, "Pass")
     }
-    
-    private func printState() {
-        NSLog("Current state: %@", stateMachine.currentState)
-        NSLog("Peers: Found(%d), Invited(%d), Connected(%d)", stateMachine.numberOfPeers(.Found), stateMachine.numberOfPeers(.Invited), stateMachine.numberOfPeers(.Connected))
-    }
-    
 }
