@@ -9,6 +9,8 @@
 import Foundation
 import TransitionKit
 
+typealias DidEnterStateBlock = (source: String, destination: String) -> (Void)
+
 class StateMachine : NSObject {
     
     internal(set) var peers = NSMutableOrderedSet()
