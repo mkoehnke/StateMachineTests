@@ -23,25 +23,58 @@ class AdvertiserStateMachine : StateMachine {
     private let hasConnectedEventName = "hasConnectedEventName"
     private let connectionLostEventName = "connectionLostEvent"
  
+    private let searchingState : TKState!
+    private let hasReceivedInvitationsState : TKState!
+    private let hasSelectedInvitationState : TKState!
+    private let hasAcceptedInvitationState : TKState!
+    private let connectedState : TKState!
+    
+    private let invitationFoundEvent : TKEvent!
+    private let invitationSelectedEvent : TKEvent!
+    private let invitationAcceptedEvent : TKEvent!
+    private let hasConnectedEvent : TKEvent!
+    private let connectionLostEvent : TKEvent!
     
     override init() {
+        searchingState = TKState(name: searchingStateName)
+        hasReceivedInvitationsState = TKState(name: hasReceivedInvitationsStateName)
+        hasSelectedInvitationState = TKState(name: hasSelectedInvitationStateName)
+        hasAcceptedInvitationState = TKState(name: hasAcceptedInvitationStateName)
+        connectedState = TKState(name: connectedStateName)
+        
+        invitationFoundEvent = TKEvent(name: invitationFoundEventName, transitioningFromStates: [searchingState], toState: hasReceivedInvitationsState)
+        invitationSelectedEvent = TKEvent(name: invitationSelectedEventName, transitioningFromStates: [hasReceivedInvitationsState], toState: hasSelectedInvitationState)
+        invitationAcceptedEvent = TKEvent(name: invitationAcceptedEventName, transitioningFromStates: [hasSelectedInvitationState], toState: hasAcceptedInvitationState)
+        hasConnectedEvent = TKEvent(name: hasConnectedEventName, transitioningFromStates: [hasAcceptedInvitationState], toState: connectedState)
+        connectionLostEvent = TKEvent(name: connectionLostEventName, transitioningFromStates: [connectedState, hasAcceptedInvitationState, hasSelectedInvitationState, hasReceivedInvitationsState], toState: searchingState)
         super.init()
-        let searchingState = TKState(name: searchingStateName)
-        let hasReceivedInvitationsState = TKState(name: hasReceivedInvitationsStateName)
-        let hasSelectedInvitationState = TKState(name: hasSelectedInvitationStateName)
-        let hasAcceptedInvitationState = TKState(name: hasAcceptedInvitationStateName)
-        let connectedState = TKState(name: connectedStateName)
-        
-        let invitationFoundEvent = TKEvent(name: invitationFoundEventName, transitioningFromStates: [searchingState], toState: hasReceivedInvitationsState)
-        let invitationSelectedEvent = TKEvent(name: invitationSelectedEventName, transitioningFromStates: [hasReceivedInvitationsState], toState: hasSelectedInvitationState)
-        let invitationAcceptedEvent = TKEvent(name: invitationAcceptedEventName, transitioningFromStates: [hasSelectedInvitationState], toState: hasAcceptedInvitationState)
-        let hasConnectedEvent = TKEvent(name: hasConnectedEventName, transitioningFromStates: [hasAcceptedInvitationState], toState: connectedState)
-        let connectionLostEvent = TKEvent(name: connectionLostEventName, transitioningFromStates: [connectedState, hasAcceptedInvitationState, hasSelectedInvitationState, hasReceivedInvitationsState], toState: searchingState)
-        
+    }
+    
+    override func activate() -> TKStateMachine {
         stateMachine.addStates([searchingState, hasReceivedInvitationsState, hasSelectedInvitationState, hasAcceptedInvitationState, connectedState])
         stateMachine.addEvents([invitationFoundEvent, invitationSelectedEvent, invitationAcceptedEvent, hasConnectedEvent, connectionLostEvent])
         stateMachine.initialState = searchingState
         stateMachine.activate()
+        return super.activate()
+    }
+    
+    override func setDidEnterStateBlock(stateName : String, block : DidEnterStateBlock) {
+        super.setDidEnterStateBlock(stateName, block: block)
+        
+        let privateBlock = { (state: TKState!, transition: TKTransition!) -> (Void) in
+            if transition != nil {
+                block(source: transition.sourceState.name, destination: transition.destinationState.name)
+            }
+        }
+        
+        switch stateName {
+        case searchingStateName: searchingState.setDidEnterStateBlock(privateBlock)
+        case hasReceivedInvitationsStateName: hasReceivedInvitationsState.setDidEnterStateBlock(privateBlock)
+        case hasSelectedInvitationStateName: hasSelectedInvitationState.setDidEnterStateBlock(privateBlock)
+        case hasAcceptedInvitationStateName: hasAcceptedInvitationState.setDidEnterStateBlock(privateBlock)
+        case connectedStateName: connectedState.setDidEnterStateBlock(privateBlock)
+        default: NSLog("StateName didn't match.")
+        }
     }
     
     func invitationFound(peer: Peer) -> Bool {

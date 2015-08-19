@@ -20,6 +20,17 @@ class StateMachine : NSObject {
         get { return stateMachine.currentState.name }
     }
     
+    func activate() -> TKStateMachine {
+        // Override
+        return stateMachine
+    }
+    
+    func setDidEnterStateBlock(stateName : String, block : DidEnterStateBlock) {
+        if stateMachine.isActive() {
+            NSException(name:NSInvalidArgumentException, reason:"StateMachine must not be active.", userInfo:nil).raise()
+        }
+    }
+    
     // MARK: Helper Methods
     
     internal func fireEvent(eventName: String) -> Bool {

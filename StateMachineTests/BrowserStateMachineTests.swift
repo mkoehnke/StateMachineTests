@@ -16,6 +16,28 @@ class StateMachineTests: XCTestCase {
     override func setUp() {
         super.setUp()
         stateMachine = BrowserStateMachine()
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.searchingStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.hasFoundPeersStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.hasInvitedPeersStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.hasConnectedPeersStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.sessionStartedStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.activate()
     }
     
     override func tearDown() {

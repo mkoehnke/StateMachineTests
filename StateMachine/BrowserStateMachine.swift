@@ -24,37 +24,75 @@ class BrowserStateMachine : StateMachine {
     private let lastInvitedPeerLostEventName = "lastInvitedPeerLostEvent"
     private let lastConnectedPeerLostEventName = "lastConnectedPeerLostEvent"
     
+    private let searchingState : TKState!
+    private let hasFoundPeersState : TKState!
+    private let hasInvitedPeersState : TKState!
+    private let hasConnectedPeersState : TKState!
+    private let sessionStartedState : TKState!
+    
+    private let peerFoundEvent : TKEvent!
+    private let peerInvitedEvent : TKEvent!
+    private let peerConnectedEvent : TKEvent!
+    private let lastFoundPeerLostEvent : TKEvent!
+    private let lastInvitedPeerLostEvent : TKEvent!
+    private let lastConnectedPeerLostEvent : TKEvent!
+    
     override init() {
+        searchingState = TKState(name: searchingStateName)
+        hasFoundPeersState = TKState(name: hasFoundPeersStateName)
+        hasInvitedPeersState = TKState(name: hasInvitedPeersStateName)
+        hasConnectedPeersState = TKState(name: hasConnectedPeersStateName)
+        sessionStartedState = TKState(name: sessionStartedStateName)
+        
+        peerFoundEvent = TKEvent(name: peerFoundEventName, transitioningFromStates: [searchingState], toState: hasFoundPeersState)
+        peerInvitedEvent = TKEvent(name: peerInvitedEventName, transitioningFromStates: [hasFoundPeersState], toState: hasInvitedPeersState)
+        peerConnectedEvent = TKEvent(name: peerConnectedEventName, transitioningFromStates: [hasInvitedPeersState], toState: hasConnectedPeersState)
+        
+        lastFoundPeerLostEvent = TKEvent(name: lastFoundPeerLostEventName, transitioningFromStates: [hasFoundPeersState, hasInvitedPeersState, hasConnectedPeersState], toState: searchingState)
+        lastInvitedPeerLostEvent = TKEvent(name: lastInvitedPeerLostEventName, transitioningFromStates: [hasInvitedPeersState, hasConnectedPeersState], toState: hasFoundPeersState)
+        lastConnectedPeerLostEvent = TKEvent(name: lastConnectedPeerLostEventName, transitioningFromStates: [hasConnectedPeersState], toState: hasInvitedPeersState)
+        
         super.init()
-        let searchingState = TKState(name: searchingStateName)
-        let hasFoundPeersState = TKState(name: hasFoundPeersStateName)
-        let hasInvitedPeersState = TKState(name: hasInvitedPeersStateName)
-        let hasConnectedPeersState = TKState(name: hasConnectedPeersStateName)
-        let sessionStartedState = TKState(name: sessionStartedStateName)
         
-        let peerFoundEvent = TKEvent(name: peerFoundEventName, transitioningFromStates: [searchingState], toState: hasFoundPeersState)
-        let peerInvitedEvent = TKEvent(name: peerInvitedEventName, transitioningFromStates: [hasFoundPeersState], toState: hasInvitedPeersState)
-        let peerConnectedEvent = TKEvent(name: peerConnectedEventName, transitioningFromStates: [hasInvitedPeersState], toState: hasConnectedPeersState)
-        
-        let lastFoundPeerLostEvent = TKEvent(name: lastFoundPeerLostEventName, transitioningFromStates: [hasFoundPeersState, hasInvitedPeersState, hasConnectedPeersState], toState: searchingState)
         lastFoundPeerLostEvent.setShouldFireEventBlock { [weak self] event, transition -> Bool in
             return self?.numberOfPeers(.Found) == 0 && self?.numberOfPeers(.Invited) == 0 && self?.numberOfPeers(.Connected) == 0
         }
-        let lastInvitedPeerLostEvent = TKEvent(name: lastInvitedPeerLostEventName, transitioningFromStates: [hasInvitedPeersState, hasConnectedPeersState], toState: hasFoundPeersState)
+
         lastInvitedPeerLostEvent.setShouldFireEventBlock { [weak self] event, transition -> Bool in
             return self?.numberOfPeers(.Found) > 0 && self?.numberOfPeers(.Invited) == 0 && self?.numberOfPeers(.Connected) == 0
         }
-        let lastConnectedPeerLostEvent = TKEvent(name: lastConnectedPeerLostEventName, transitioningFromStates: [hasConnectedPeersState], toState: hasInvitedPeersState)
+        
         lastConnectedPeerLostEvent.setShouldFireEventBlock { [weak self] event, transition -> Bool in
             return self?.numberOfPeers(.Invited) > 0 && self?.numberOfPeers(.Connected) == 0
         }
-        
+    }
+    
+    override func activate() -> TKStateMachine {
         stateMachine.addStates([searchingState, hasFoundPeersState, hasInvitedPeersState, hasConnectedPeersState, sessionStartedState])
         stateMachine.addEvents([peerFoundEvent, peerInvitedEvent, peerConnectedEvent, lastFoundPeerLostEvent, lastInvitedPeerLostEvent, lastConnectedPeerLostEvent])
         stateMachine.initialState = searchingState
         stateMachine.activate()
+        return super.activate()
     }
     
+    override func setDidEnterStateBlock(stateName : String, block : DidEnterStateBlock) {
+        super.setDidEnterStateBlock(stateName, block: block)
+        
+        let privateBlock = { (state: TKState!, transition: TKTransition!) -> (Void) in
+            if transition != nil {
+                block(source: transition.sourceState.name, destination: transition.destinationState.name)
+            }
+        }
+        
+        switch stateName {
+            case searchingStateName: searchingState.setDidEnterStateBlock(privateBlock)
+            case hasFoundPeersStateName: hasFoundPeersState.setDidEnterStateBlock(privateBlock)
+            case hasInvitedPeersStateName: hasInvitedPeersState.setDidEnterStateBlock(privateBlock)
+            case hasConnectedPeersStateName: hasConnectedPeersState.setDidEnterStateBlock(privateBlock)
+            case sessionStartedStateName: sessionStartedState.setDidEnterStateBlock(privateBlock)
+            default: NSLog("StateName didn't match.")
+        }
+    }
     
     func peerConnected(peer: Peer) -> Bool {
         peer.currentState = .Connected

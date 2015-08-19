@@ -16,6 +16,28 @@ class AdvertiserStateMachineTests: XCTestCase {
     override func setUp() {
         super.setUp()
         stateMachine = AdvertiserStateMachine()
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.searchingStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.hasReceivedInvitationsStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.hasSelectedInvitationStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.hasAcceptedInvitationStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.setDidEnterStateBlock(stateMachine.connectedStateName, block: { source, destination in
+            NSLog("Did transition from %@ to %@", source, destination)
+        })
+        
+        stateMachine.activate()
     }
     
     override func tearDown() {
