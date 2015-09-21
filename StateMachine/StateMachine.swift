@@ -34,7 +34,14 @@ class StateMachine : NSObject {
     // MARK: Helper Methods
     
     internal func fireEvent(eventName: String) -> Bool {
-        return stateMachine.canFireEvent(eventName) && stateMachine.fireEvent(eventName, userInfo: nil, error: nil)
+        if stateMachine.canFireEvent(eventName) {
+            do {
+                try stateMachine.fireEvent(eventName, userInfo: nil)
+            } catch {
+                return false
+            }
+        }
+        return false
     }
     
     func numberOfPeers(state: Peer.State) -> Int {
